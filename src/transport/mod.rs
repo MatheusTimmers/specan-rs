@@ -1,4 +1,5 @@
 use std::{io::{BufRead, BufReader, Write}, net::TcpStream};
+use crate::error::SpecanError;
 
 pub struct TcpTransport {
     stream: TcpStream,
@@ -6,27 +7,30 @@ pub struct TcpTransport {
 }
 
 impl TcpTransport {
-    pub fn connect(ip: &str, port: u16) -> TcpTransport {
+    pub fn connect(ip: &str, port: u16) -> Result<TcpTransport, SpecanError> {
         let addr = format!("{ip}:{port}");
-        let stream = TcpStream::connect(addr).unwrap();
-        let reader = BufReader::new(stream.try_clone().unwrap());
+        let stream = TcpStream::connect(addr).map_err(|e| SpecanError::Connection(e.to_string()))?;
+        let reader = BufReader::new(stream.try_clone().map_err(|e| SpecanError::Connection(e.to_string()))?);
 
-        TcpTransport { stream, reader}
+        Ok(TcpTransport { stream, reader})
     }
 
-    pub fn query(&mut self, cmd: &str) -> String{
-        self.send(cmd);
+    pub fn query(&mut self, cmd: &str) -> Result<String, SpecanError> {
+        self.send(cmd)?;
         self.recv()
     }
 
-    pub fn send(&mut self, cmd: &str){
+    pub fn send(&mut self, cmd: &str) -> Result<(), SpecanError> {
         let msg = format!("{cmd}\n");
-        self.stream.write_all(msg.as_bytes()).unwrap();
+        self.stream.write_all(msg.as_bytes()).map_err(|e| SpecanError::Connection(e.to_string()))?;
+
+        Ok(())
     }
 
-    pub fn recv(&mut self) -> String {
+    pub fn recv(&mut self) -> Result<String, SpecanError> {
         let mut line = String::new();
-        self.reader.read_line(&mut line).unwrap();
-        line
+        self.reader.read_line(&mut line).map_err(|e| SpecanError::Connection(e.to_string()))?;
+
+        Ok(line)
     }
 }

@@ -1,4 +1,5 @@
 use crate::transport::TcpTransport;
+use crate::error::SpecanError;
 
 pub struct Scpi {
     socket: TcpTransport,
@@ -9,23 +10,23 @@ impl Scpi {
         Scpi { socket }
     }
     
-    pub fn query(&mut self, cmd: &str) -> String {
+    pub fn query(&mut self, cmd: &str) -> Result<String, SpecanError> {
       self.socket.query(cmd)
     }
 
-    pub fn write(&mut self, cmd: &str) {
+    pub fn write(&mut self, cmd: &str) -> Result<(), SpecanError>{
         self.socket.send(cmd)
     }
 
-    pub fn idn(&mut self) -> String {
+    pub fn idn(&mut self) -> Result<String, SpecanError> {
         self.socket.query("*IDN?")
     }
 
-    pub fn reset(&mut self) {
-        self.socket.send("*RST");
+    pub fn reset(&mut self) -> Result<(), SpecanError> {
+        self.socket.send("*RST")
     }
 
-    pub fn wait(&mut self) {
-        self.socket.send("*WAI");
+    pub fn wait(&mut self) -> Result<(), SpecanError> {
+        self.socket.send("*WAI")
     }
 }
