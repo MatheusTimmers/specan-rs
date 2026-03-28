@@ -1,21 +1,19 @@
 use crate::scpi::Scpi;
-use crate::transport::TcpTransport;
+use crate::transport::Transport;
 use crate::instrument::{Measurement, SpectrumAnalyzer};
 use crate::error::SpecanError;
 
-pub struct N9010a {
-    client: Scpi,
+pub struct N9010a<T: Transport> {
+    client: Scpi<T>,
 }
 
-impl N9010a{
-    pub fn connect(ip: &str, port: u16, timeout_ms: u64) -> Result<N9010a, SpecanError> {
-        let socket = TcpTransport::connect(ip, port, timeout_ms)?;
-        let client = Scpi::new(socket);
-        Ok(N9010a { client })
+impl<T: Transport> N9010a<T> {
+    pub fn new(transport: T) -> Self {
+        N9010a { client: Scpi::new(transport) }
     }
 }
 
-impl SpectrumAnalyzer for N9010a {
+impl<T: Transport> SpectrumAnalyzer for N9010a<T> {
     // frequency
     fn set_center_frequency(&mut self, mhz: f64) -> Result<(), SpecanError> {
         self.client.write(&format!(":FREQ:CENT {mhz} MHz"))?;
