@@ -1,3 +1,4 @@
+use std::time::Duration;
 use std::{io::{BufRead, BufReader, Write}, net::TcpStream};
 use crate::error::SpecanError;
 
@@ -7,9 +8,14 @@ pub struct TcpTransport {
 }
 
 impl TcpTransport {
-    pub fn connect(ip: &str, port: u16) -> Result<TcpTransport, SpecanError> {
+    pub fn connect(ip: &str, port: u16, timeout_ms: u64) -> Result<TcpTransport, SpecanError> {
         let addr = format!("{ip}:{port}");
         let stream = TcpStream::connect(addr).map_err(|e| SpecanError::Connection(e.to_string()))?;
+
+        let timeout = Some(Duration::from_millis(timeout_ms));
+        stream.set_read_timeout(timeout).map_err(|e| SpecanError::Connection(e.to_string()))?;
+        stream.set_write_timeout(timeout).map_err(|e| SpecanError::Connection(e.to_string()))?;
+
         let reader = BufReader::new(stream.try_clone().map_err(|e| SpecanError::Connection(e.to_string()))?);
 
         Ok(TcpTransport { stream, reader})
