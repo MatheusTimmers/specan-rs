@@ -1,0 +1,9 @@
+[package]
+name = "specan"
+version = "0.1.0"
+edition = "2021"
+description = "Rust library for spectrum analyzer control via SCPI"
+license = "MIT"
+
+[dependencies]
+thiserror = "1"
