@@ -111,7 +111,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ### As a CLI
 
 ```sh
-cargo run --bin specan-cli -- --ip 192.168.0.1 --port 5025 --tech wifi
+cargo run --bin specan-cli -- --ip 192.168.0.1 --port 5025 --tech wifi --instruments n9010a
 ```
 
 The CLI guides you through assay selection and configuration interactively, then saves results to a timestamped folder:

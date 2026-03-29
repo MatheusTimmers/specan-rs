@@ -31,12 +31,21 @@ struct Args {
 
     #[arg(long)]
     tech: Tech,
+
+    #[arg(long)]
+    instruments: Instruments,
 }
 
 #[derive(clap::ValueEnum, Clone)]
 enum Tech {
     Wifi,
     Bluetooth,
+}
+
+#[derive(clap::ValueEnum, Clone)]
+enum Instruments {
+    N9010a,
+    Esr,
 }
 
 fn build_assay(name: &str) -> Result<AssayKind, Box<dyn std::error::Error>> {
@@ -171,17 +180,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\nConectando em {}:{}...", args.ip, args.port);
 
     let transport = specan::transport::TcpTransport::connect(&args.ip, args.port, 5000)?;
-    let instrument = specan::instrument::N9010a::new(transport);
+
+    let completed = match args.instruments {
+        Instruments::N9010a => execute(specan::instrument::N9010a::new(transport), &mut assays, &config),
+        Instruments::Esr    => execute(specan::instrument::Esr::new(transport), &mut assays, &config),
+    };
+
+    if !completed.is_empty() {
+        let dir = save_results(&completed)?;
+        println!("\nResultados salvos em: {}", dir.display());
+    }
+
+    Ok(())
+}
+
+fn execute<A: specan::instrument::SpectrumAnalyzer>(
+    instrument: A,
+    assays: &mut [AssayKind],
+    config: &specan::assay::AssayConfig,
+) -> Vec<AssayResult> {
     let session = specan::session::Session::new(instrument);
     let mut runner = specan::runner::Runner::new(session);
 
     println!("Executando {} ensaio(s)...\n", assays.len());
 
-    let results = runner.run_all(&mut assays, &config);
-
-    let mut completed: Vec<AssayResult> = Vec::new();
-
-    for result in results {
+    let mut completed = Vec::new();
+    for result in runner.run_all(assays, config) {
         match result {
             Ok(r) => {
                 println!("✓ {}", r.name);
@@ -193,11 +217,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Err(e) => println!("✗ erro: {e}"),
         }
     }
-
-    if !completed.is_empty() {
-        let dir = save_results(&completed)?;
-        println!("\nResultados salvos em: {}", dir.display());
-    }
-
-    Ok(())
+    completed
 }
