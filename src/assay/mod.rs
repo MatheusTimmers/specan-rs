@@ -13,6 +13,7 @@ use bluetooth::output_power::OutputPower;
 use bluetooth::peak_power_spectral_density::PeakPowerSpectralDensity;
 
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AssayResult {
     pub name: String,
     pub measurements: Vec<Measurement>,
@@ -20,6 +21,7 @@ pub struct AssayResult {
 }
 
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AssayConfig {
     pub center_frequency_mhz: f64,
     pub bandwidth_mhz: f64,

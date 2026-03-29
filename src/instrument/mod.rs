@@ -3,6 +3,7 @@ mod n9010a;
 pub use n9010a::N9010a;
 
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Measurement {
     pub value: f64,
     pub unit: String,

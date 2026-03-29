@@ -5,5 +5,9 @@ edition = "2021"
 description = "Rust library for spectrum analyzer control via SCPI"
 license = "MIT"
 
+[features]
+serde = ["dep:serde"]
+
 [dependencies]
 thiserror = "1"
+serde = { version = "1", features = ["derive"], optional = true }
