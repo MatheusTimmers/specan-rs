@@ -103,4 +103,41 @@ impl<T: Transport> SpectrumAnalyzer for N9010a<T> {
         let result = self.client.query(":CALC:MARK:Y?")?.parse::<f64>().map_err(|e| SpecanError::Parser(e.to_string()))?;
         Ok(Measurement { value: result, unit: "dBm".to_string() })
     }
+
+    fn get_peak_markers(&mut self, count: u32) -> Result<Vec<f64>, SpecanError> {
+        let mut values = Vec::new();
+        for i in 1..=count {
+            self.client.write(&format!(":CALC:MARK{i}:MAX"))?;
+            let val = self.client.query(&format!(":CALC:MARK{i}:Y?"))?.parse::<f64>()
+                .map_err(|e| SpecanError::Parser(e.to_string()))?;
+            values.push(val);
+        }
+        Ok(values)
+    }
+
+    fn get_sweep_time(&mut self) -> Result<f64, SpecanError> {
+        let result = self.client.query(":SENS:SWE:TIME?")?.parse::<f64>()
+            .map_err(|e| SpecanError::Parser(e.to_string()))?;
+        Ok(result)
+    }
+
+    fn initiate_sweep(&mut self) -> Result<(), SpecanError> {
+        self.client.write(":INIT:IMM")
+    }
+
+    fn set_continuous_sweep(&mut self, on: bool) -> Result<(), SpecanError> {
+        let val = if on { "ON" } else { "OFF" };
+        self.client.write(&format!(":INIT:CONT {val}"))
+    }
+
+    fn capture_screen(&mut self) -> Result<Vec<u8>, SpecanError> {
+        self.client.write(":MMEM:STOR:SCR \"screen.png\"")?;
+        let raw = self.client.query(":MMEM:DATA? \"screen.png\"")?;
+        Ok(raw.into_bytes())
+    }
+
+    fn reset(&mut self) -> Result<(), SpecanError> {
+        self.client.write("*RST")?;
+        self.client.write("*WAI")
+    }
 }

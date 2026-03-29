@@ -31,4 +31,16 @@ pub trait SpectrumAnalyzer {
     fn get_obw(&mut self, occupancy_percent: f64, xdb_down: f64) -> Result<Measurement, SpecanError>;
     fn get_channel_power(&mut self, integration_bw_mhz: f64) -> Result<Measurement, SpecanError>;
     fn get_peak_power(&mut self) -> Result<Measurement, SpecanError>;
+    fn get_peak_markers(&mut self, count: u32) -> Result<Vec<f64>, SpecanError>;
+    fn get_sweep_time(&mut self) -> Result<f64, SpecanError>;
+
+    // sweep control
+    fn initiate_sweep(&mut self) -> Result<(), SpecanError>;
+    fn set_continuous_sweep(&mut self, on: bool) -> Result<(), SpecanError>;
+
+    // screen
+    fn capture_screen(&mut self) -> Result<Vec<u8>, SpecanError>;
+
+    // reset
+    fn reset(&mut self) -> Result<(), SpecanError>;
 }
