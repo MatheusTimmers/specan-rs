@@ -1,12 +1,21 @@
 use crate::error::SpecanError;
 mod n9010a;
+mod esr;
 pub use n9010a::N9010a;
+pub use esr::Esr;
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Measurement {
     pub value: f64,
     pub unit: String,
+}
+
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct MarkerReading {
+    pub frequency_hz: f64,
+    pub power_dbm: f64,
 }
 
 pub trait SpectrumAnalyzer {
@@ -35,6 +44,8 @@ pub trait SpectrumAnalyzer {
     fn get_channel_power(&mut self, integration_bw_mhz: f64) -> Result<Measurement, SpecanError>;
     fn get_peak_power(&mut self) -> Result<Measurement, SpecanError>;
     fn get_peak_markers(&mut self, count: u32) -> Result<Vec<Measurement>, SpecanError>;
+    fn get_markers(&mut self, count: u32) -> Result<Vec<MarkerReading>, SpecanError>;
+    fn get_marker_time(&mut self, marker_id: u32) -> Result<f64, SpecanError>;
     fn get_sweep_time(&mut self) -> Result<f64, SpecanError>;
 
     // sweep control
