@@ -3,7 +3,7 @@ use std::{io::{BufRead, BufReader, Write}, net::TcpStream};
 use crate::error::SpecanError;
 use crate::transport::Transport;
 
-pub(crate) struct TcpTransport {
+pub struct TcpTransport {
     stream: TcpStream,
     reader: BufReader<TcpStream>
 }

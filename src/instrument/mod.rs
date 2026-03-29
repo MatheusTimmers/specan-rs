@@ -1,5 +1,6 @@
 use crate::error::SpecanError;
 mod n9010a;
+pub use n9010a::N9010a;
 
 pub struct Measurement {
     pub value: f64,

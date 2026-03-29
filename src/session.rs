@@ -8,4 +8,8 @@ impl<T: SpectrumAnalyzer> Session<T> {
     pub fn new(instrument: T) -> Self {
         Self { instrument }
     }
+
+    pub(crate) fn instrument(&mut self) -> &mut T {
+        &mut self.instrument
+    }
 }
