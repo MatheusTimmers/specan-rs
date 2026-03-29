@@ -3,11 +3,11 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum SpecanError {
     #[error("connection error: {0}")]
-    Connection(String),
+    Connection(#[from] std::io::Error),
 
-    #[error("io error: {0}")]
-    Io(String),
+    #[error("parse error: {0}")]
+    Parse(#[from] std::num::ParseFloatError),
 
-    #[error("parser error: {0}")]
-    Parser(String),
+    #[error("instrument error: {0}")]
+    Instrument(String),
 }

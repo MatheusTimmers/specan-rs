@@ -85,7 +85,7 @@ impl<T: Transport> SpectrumAnalyzer for N9010a<T> {
         self.client.write(&format!(":SENS:OBW:PERC {occupancy_percent}"))?;
         self.client.write(&format!(":SENS:OBW:XDB {xdb_down} DB"))?;
         self.client.write(":INIT:IMM")?;
-        let result = self.client.query(":FETC:OBW?")?.parse::<f64>().map_err(|e| SpecanError::Parser(e.to_string()))?;
+        let result = self.client.query(":FETC:OBW?")?.parse::<f64>()?;
         Ok(Measurement { value: result, unit: "Hz".to_string() })
     }
 
@@ -93,14 +93,14 @@ impl<T: Transport> SpectrumAnalyzer for N9010a<T> {
         self.client.write(":CONF:CHP")?;
         self.client.write(&format!(":CHP:BAND:INT {integration_bw_mhz} MHz"))?;
         self.client.write(":INIT:IMM")?;
-        let result = self.client.query(":MEAS:CPOW?")?.parse::<f64>().map_err(|e| SpecanError::Parser(e.to_string()))?;
+        let result = self.client.query(":MEAS:CPOW?")?.parse::<f64>()?;
         Ok(Measurement { value: result, unit: "dBm".to_string() })
     }
 
     fn get_peak_power(&mut self) -> Result<Measurement, SpecanError> {
         self.client.write(":CALC:MARK:FUNC:TYPE MAX")?;
         self.client.write(":CALC:MARK:FUNC:EXEC")?;
-        let result = self.client.query(":CALC:MARK:Y?")?.parse::<f64>().map_err(|e| SpecanError::Parser(e.to_string()))?;
+        let result = self.client.query(":CALC:MARK:Y?")?.parse::<f64>()?;
         Ok(Measurement { value: result, unit: "dBm".to_string() })
     }
 
@@ -108,16 +108,14 @@ impl<T: Transport> SpectrumAnalyzer for N9010a<T> {
         let mut values = Vec::new();
         for i in 1..=count {
             self.client.write(&format!(":CALC:MARK{i}:MAX"))?;
-            let val = self.client.query(&format!(":CALC:MARK{i}:Y?"))?.parse::<f64>()
-                .map_err(|e| SpecanError::Parser(e.to_string()))?;
+            let val = self.client.query(&format!(":CALC:MARK{i}:Y?"))?.parse::<f64>()?;
             values.push(Measurement { value: val, unit: "dBm".to_string() });
         }
         Ok(values)
     }
 
     fn get_sweep_time(&mut self) -> Result<f64, SpecanError> {
-        let result = self.client.query(":SENS:SWE:TIME?")?.parse::<f64>()
-            .map_err(|e| SpecanError::Parser(e.to_string()))?;
+        let result = self.client.query(":SENS:SWE:TIME?")?.parse::<f64>()?;
         Ok(result)
     }
 
