@@ -39,33 +39,35 @@ Each layer depends only on the trait above it, so you can swap `TcpTransport` fo
 ├─────────────────────────────────────────┤
 │              SpectrumAnalyzer (trait)   │  frequency, amplitude, measurements
 │                  N9010a                 │  Keysight N9010A implementation
+│                   Esr                   │  Rohde & Schwarz ESR26 implementation
 ├─────────────────────────────────────────┤
 │                   Scpi                  │  SCPI protocol wrapper
 ├─────────────────────────────────────────┤
 │               Transport (trait)         │  send / query abstraction
-│              TcpTransport               │  TCP implementation (port 5025)
+│               TcpTransport              │  TCP implementation (port 5025)
 └─────────────────────────────────────────┘
 ```
 
-## Quick Start
+---
+
+## Usage
+
+This repository contains two crates:
+
+- **`specan`**     — the library, usable directly in any Rust project
+- **`specan-cli`** — a terminal client built on top of the library
+
+### As a library
 
 Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-specan = "0.1"
+specan = { path = "specan" }
+
+# with JSON serialization support
+specan = { path = "specan", features = ["serde"] }
 ```
-
-With optional serde support:
-
-```toml
-[dependencies]
-specan = { version = "0.1", features = ["serde"] }
-```
-
-## Usage
-
-### Connecting and running assays
 
 ```rust
 use specan::{
@@ -75,8 +77,6 @@ use specan::{
     runner::Runner,
     assay::{AssayConfig, AssayKind},
     assay::occupied_bandwidth::OccupiedBandwidth,
-    assay::maximum_peak_power::MaximumPeakPower,
-    assay::wifi::average_maximum_output_power::AverageMaximumOutputPower,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -86,7 +86,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut runner = Runner::new(session);
 
     let config = AssayConfig {
-        center_frequency_mhz: 2437.0, // Wi-Fi channel 6
+        center_frequency_mhz: 2437.0,
         bandwidth_mhz: 20.0,
         attenuation_db: 10.0,
         reference_level_dbm: 0.0,
@@ -95,18 +95,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut assays = vec![
         AssayKind::OccupiedBandwidth(OccupiedBandwidth { xdb_down: 26 }),
-        AssayKind::MaximumPeakPower(MaximumPeakPower),
-        AssayKind::AverageMaximumOutputPower(AverageMaximumOutputPower),
     ];
 
     for result in runner.run_all(&mut assays, &config) {
         match result {
-            Ok(r) => {
-                println!("{}", r.name);
-                for m in &r.measurements {
-                    println!("  {:.3} {}", m.value, m.unit);
-                }
-            }
+            Ok(r) => println!("{}: {:.3} {}", r.name, r.measurements[0].value, r.measurements[0].unit),
             Err(e) => eprintln!("error: {e}"),
         }
     }
@@ -115,44 +108,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-### Structured logging
+### As a CLI
 
-`specan-rs` uses [`tracing`](https://docs.rs/tracing) to emit structured events at every step. Add a subscriber in your application to enable them:
-
-```toml
-[dependencies]
-tracing-subscriber = "0.3"
+```sh
+cargo run --bin specan-cli -- --ip 192.168.0.1 --port 5025 --tech wifi
 ```
 
-```rust
-fn main() {
-    tracing_subscriber::fmt::init();
-    // ...
-}
-```
-
-<details>
-<summary>Example output</summary>
+The CLI guides you through assay selection and configuration interactively, then saves results to a timestamped folder:
 
 ```
-INFO  specan::runner > assay{name="Occupied Bandwidth"}: starting
-DEBUG specan::scpi   > assay{name="Occupied Bandwidth"}: send cmd=":FREQ:CENT 2437 MHz"
-DEBUG specan::scpi   > assay{name="Occupied Bandwidth"}: send cmd=":SENS:OBW:PERC 99"
-DEBUG specan::scpi   > assay{name="Occupied Bandwidth"}: send cmd=":INIT:IMM"
-DEBUG specan::scpi   > assay{name="Occupied Bandwidth"}: query cmd=":FETC:OBW?" response="20000.0"
-INFO  specan::runner > assay{name="Occupied Bandwidth"}: completed elapsed_ms=15043
+results/
+└── 20260329_143022/
+    ├── results.json
+    └── power_spectral_density.png
 ```
 
-</details>
-
-### Serialization
-
-Enable the `serde` feature to serialize results to JSON or any other format:
-
-```rust
-let json = serde_json::to_string(&result)?;
-// {"name":"Occupied Bandwidth","measurements":[{"value":20.0,"unit":"kHz"}],"screenshot":null}
-```
+---
 
 ## Available Assays
 
@@ -162,6 +133,7 @@ let json = serde_json::to_string(&result)?;
 |---|---|---|
 | `OccupiedBandwidth` | OBW at 99% occupancy, configurable xdB-down threshold | kHz |
 | `MaximumPeakPower` | Channel power with MAXH/POS detector | dBm |
+| `SpuriousEmissions` | Peak power across configurable frequency ranges | dBm |
 
 ### Wi-Fi
 
@@ -177,35 +149,22 @@ let json = serde_json::to_string(&result)?;
 |---|---|---|
 | `OutputPower` | Two-step: OBW at −26 dB → channel power over real bandwidth | dBm |
 | `PeakPowerSpectralDensity` | Peak marker, RBW = 3 kHz, MAXH/POS detector | dBm/Hz |
+| `ChannelSeparation` | Frequency separation between hop channels | MHz |
+| `HopFrequencyCount` | Number of channels above power threshold | channels |
+| `OccupancyTime` | Burst duration in zero-span mode | ms |
+
+---
 
 ## Supported Instruments
 
 | Instrument | Transport | Port |
 |---|---|---|
 | Keysight N9010A EXA | TCP | 5025 |
+| Rohde & Schwarz ESR26 | TCP | 5025 |
 
 Adding support for a new instrument requires only implementing the `SpectrumAnalyzer` trait.
 
-## Error Handling
-
-```rust
-pub enum SpecanError {
-    Connection(std::io::Error),       // network errors, including timeouts
-    Parse(std::num::ParseFloatError), // failed to parse instrument response
-    Instrument(String),               // instrument returned unexpected data
-}
-```
-
-## Testing
-
-Tests use a `MockTransport` that serves pre-defined SCPI responses, so no real instrument is needed:
-
-```sh
-cargo test
-```
-
-> [!NOTE]
-> Some tests include `thread::sleep` calls that match real instrument sweep times. Expect ~15 s total with parallel execution.
+---
 
 ## License
 
