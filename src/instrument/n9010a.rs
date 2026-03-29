@@ -93,7 +93,7 @@ impl<T: Transport> SpectrumAnalyzer for N9010a<T> {
         self.client.write(":CONF:CHP")?;
         self.client.write(&format!(":CHP:BAND:INT {integration_bw_mhz} MHz"))?;
         self.client.write(":INIT:IMM")?;
-        let result = self.client.query(":MEAS:CPOW?")?.parse::<f64>()?;
+        let result = self.client.query(":FETC:CHP:CHP?")?.parse::<f64>()?;
         Ok(Measurement { value: result, unit: "dBm".to_string() })
     }
 
