@@ -53,6 +53,30 @@ pub enum AssayKind {
     OccupancyTime(OccupancyTime),
 }
 
+pub fn wifi_assay_names() -> &'static [&'static str] {
+    &[
+        "Occupied Bandwidth",
+        "Maximum Peak Power",
+        "Average Maximum Output Power",
+        "Power Spectral Density",
+        "Average Power Spectral Density",
+        "Spurious Emissions",
+    ]
+}
+
+pub fn bluetooth_assay_names() -> &'static [&'static str] {
+    &[
+        "Occupied Bandwidth",
+        "Maximum Peak Power",
+        "Output Power",
+        "Peak Power Spectral Density",
+        "Channel Separation",
+        "Hop Frequency Count",
+        "Occupancy Time",
+        "Spurious Emissions",
+    ]
+}
+
 impl AssayKind {
     pub fn name(&self) -> &str {
         match self {

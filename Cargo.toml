@@ -1,14 +1,7 @@
-[package]
-name = "specan"
-version = "0.1.0"
-edition = "2021"
-description = "Rust library for spectrum analyzer control via SCPI"
-license = "MIT"
+[workspace]
+resolver = "2"
+members = [
+    "specan",
+    "specan-cli",
+]
 
-[features]
-serde = ["dep:serde"]
-
-[dependencies]
-thiserror = "1"
-tracing = "0.1"
-serde = { version = "1", features = ["derive"], optional = true }

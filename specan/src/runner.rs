@@ -14,7 +14,7 @@ impl<T: SpectrumAnalyzer> Runner<T> {
         Self { session }
     }
 
-    pub fn run_all(&mut self, assays: &mut Vec<AssayKind>, config: &AssayConfig) -> Vec<Result<AssayResult, SpecanError>> {
+    pub fn run_all(&mut self, assays: &mut [AssayKind], config: &AssayConfig) -> Vec<Result<AssayResult, SpecanError>> {
         assays.iter_mut().map(|assay| {
             let name = assay.name();
             let span = info_span!("assay", name);
