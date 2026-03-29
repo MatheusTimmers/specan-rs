@@ -1,5 +1,6 @@
 use std::time::Duration;
 use std::{io::{BufRead, BufReader, Write}, net::TcpStream};
+use tracing::debug;
 use crate::error::SpecanError;
 use crate::transport::Transport;
 
@@ -32,6 +33,7 @@ impl TcpTransport {
 
         let reader = BufReader::new(stream.try_clone()?);
 
+        debug!(ip, port, "connected");
         Ok(TcpTransport { stream, reader })
     }
 

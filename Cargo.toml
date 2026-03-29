@@ -10,4 +10,5 @@ serde = ["dep:serde"]
 
 [dependencies]
 thiserror = "1"
+tracing = "0.1"
 serde = { version = "1", features = ["derive"], optional = true }

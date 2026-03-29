@@ -1,3 +1,4 @@
+use tracing::debug;
 use crate::transport::Transport;
 use crate::error::SpecanError;
 
@@ -11,10 +12,13 @@ impl<T: Transport> Scpi<T> {
     }
     
     pub fn query(&mut self, cmd: &str) -> Result<String, SpecanError> {
-      self.transport.query(cmd)
+        let response = self.transport.query(cmd)?;
+        debug!(cmd, response = response.trim(), "query");
+        Ok(response)
     }
 
-    pub fn write(&mut self, cmd: &str) -> Result<(), SpecanError>{
+    pub fn write(&mut self, cmd: &str) -> Result<(), SpecanError> {
+        debug!(cmd, "send");
         self.transport.send(cmd)
     }
 

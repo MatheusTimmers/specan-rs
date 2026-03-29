@@ -45,6 +45,18 @@ pub enum AssayKind {
 }
 
 impl AssayKind {
+    pub fn name(&self) -> &str {
+        match self {
+            AssayKind::OccupiedBandwidth(_) => "Occupied Bandwidth",
+            AssayKind::MaximumPeakPower(_) => "Maximum Peak Power",
+            AssayKind::AverageMaximumOutputPower(_) => "Average Maximum Output Power",
+            AssayKind::PowerSpectralDensity(_) => "Power Spectral Density",
+            AssayKind::AveragePowerSpectralDensity(_) => "Average Power Spectral Density",
+            AssayKind::OutputPower(_) => "Output Power",
+            AssayKind::PeakPowerSpectralDensity(_) => "Peak Power Spectral Density",
+        }
+    }
+
     pub fn run<A: SpectrumAnalyzer>(&mut self, instrument: &mut A, config: &AssayConfig) -> Result<AssayResult, SpecanError> {
         match self {
             AssayKind::OccupiedBandwidth(a) => a.run(instrument, config),
