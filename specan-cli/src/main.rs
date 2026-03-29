@@ -1,5 +1,9 @@
+use std::fs;
+use std::path::PathBuf;
 use clap::Parser;
+use chrono::Local;
 use dialoguer::{Input, MultiSelect};
+use specan::assay::AssayResult;
 use specan::assay::{
     AssayKind,
     wifi_assay_names,
@@ -81,6 +85,26 @@ fn build_assay(name: &str) -> Result<AssayKind, Box<dyn std::error::Error>> {
     }
 }
 
+fn save_results(results: &[AssayResult]) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    let timestamp = Local::now().format("%Y%m%d_%H%M%S").to_string();
+    let dir = PathBuf::from("results").join(&timestamp);
+    fs::create_dir_all(&dir)?;
+
+    // JSON
+    let json = serde_json::to_string_pretty(results)?;
+    fs::write(dir.join("results.json"), json)?;
+
+    // images
+    for result in results {
+        if let Some(screenshot) = &result.screenshot {
+            let filename = result.name.to_lowercase().replace(' ', "_") + ".png";
+            fs::write(dir.join(filename), screenshot)?;
+        }
+    }
+
+    Ok(dir)
+}
+
 fn parse_ranges(input: &str) -> Result<Vec<(f64, f64)>, Box<dyn std::error::Error>> {
     input.split(',')
         .map(|r| {
@@ -96,6 +120,8 @@ fn parse_ranges(input: &str) -> Result<Vec<(f64, f64)>, Box<dyn std::error::Erro
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    tracing_subscriber::fmt::init();
+
     let args = Args::parse();
 
     let names = match args.tech {
@@ -153,6 +179,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let results = runner.run_all(&mut assays, &config);
 
+    let mut completed: Vec<AssayResult> = Vec::new();
+
     for result in results {
         match result {
             Ok(r) => {
@@ -160,9 +188,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 for m in &r.measurements {
                     println!("  {:.3} {}", m.value, m.unit);
                 }
+                completed.push(r);
             }
             Err(e) => println!("✗ erro: {e}"),
         }
+    }
+
+    if !completed.is_empty() {
+        let dir = save_results(&completed)?;
+        println!("\nResultados salvos em: {}", dir.display());
     }
 
     Ok(())
