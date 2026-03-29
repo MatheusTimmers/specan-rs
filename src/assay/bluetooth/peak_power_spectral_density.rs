@@ -25,10 +25,9 @@ impl Assay for PeakPowerSpectralDensity {
 
         thread::sleep(Duration::from_secs(10));
 
-        let markers = instrument.get_peak_markers(1)?;
-        let peak = markers.into_iter().next()
+        let peak = instrument.get_peak_markers(1)?.into_iter().next()
             .ok_or_else(|| SpecanError::Parser("no marker returned".to_string()))?;
-        let psd = Measurement { value: peak, unit: "dBm/Hz".to_string() };
+        let psd = Measurement { value: peak.value, unit: "dBm/Hz".to_string() };
 
         let screenshot = if config.capture_screen {
             Some(instrument.capture_screen()?)

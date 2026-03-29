@@ -104,13 +104,13 @@ impl<T: Transport> SpectrumAnalyzer for N9010a<T> {
         Ok(Measurement { value: result, unit: "dBm".to_string() })
     }
 
-    fn get_peak_markers(&mut self, count: u32) -> Result<Vec<f64>, SpecanError> {
+    fn get_peak_markers(&mut self, count: u32) -> Result<Vec<Measurement>, SpecanError> {
         let mut values = Vec::new();
         for i in 1..=count {
             self.client.write(&format!(":CALC:MARK{i}:MAX"))?;
             let val = self.client.query(&format!(":CALC:MARK{i}:Y?"))?.parse::<f64>()
                 .map_err(|e| SpecanError::Parser(e.to_string()))?;
-            values.push(val);
+            values.push(Measurement { value: val, unit: "dBm".to_string() });
         }
         Ok(values)
     }

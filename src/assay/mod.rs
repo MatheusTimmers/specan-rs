@@ -12,12 +12,14 @@ use wifi::average_power_spectral_density::AveragePowerSpectralDensity;
 use bluetooth::output_power::OutputPower;
 use bluetooth::peak_power_spectral_density::PeakPowerSpectralDensity;
 
+#[derive(Debug, Clone)]
 pub struct AssayResult {
     pub name: String,
     pub measurements: Vec<Measurement>,
     pub screenshot: Option<Vec<u8>>,
 }
 
+#[derive(Debug, Clone)]
 pub struct AssayConfig {
     pub center_frequency_mhz: f64,
     pub bandwidth_mhz: f64,
